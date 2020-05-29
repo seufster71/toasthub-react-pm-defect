@@ -29,8 +29,8 @@ export default function usersReducer(state = {}, action) {
 					items: reducerUtils.getItems(action),
 					listLimit: reducerUtils.getListLimit(action),
 					listStart: reducerUtils.getListStart(action),
-					orderCriteria: [{'orderColumn':'PM_DEFECT_TABLE_NAME','orderDir':'ASC'}],
-    				searchCriteria: [{'searchValue':'','searchColumn':'PM_DEFECT_TABLE_NAME'}],
+					orderCriteria: [{'orderColumn':'PM_DEFECT_TABLE_ID','orderDir':'DESC'}],
+    				searchCriteria: [{'searchValue':'','searchColumn':'PM_DEFECT_TABLE_SUMMARY'}],
 					selected: null,
 					isModifyOpen: false
 				});
@@ -66,9 +66,23 @@ export default function usersReducer(state = {}, action) {
 							let result = "";
 							if (prefForms.PM_DEFECT_FORM[i].value != null && prefForms.PM_DEFECT_FORM[i].value != ""){
 								let formValue = JSON.parse(prefForms.PM_DEFECT_FORM[i].value);
-								for (let j = 0; j < formValue.options.length; j++) {
-									if (formValue.options[j] != null && formValue.options[j].defaultInd == true){
-										result = formValue.options[j].value;
+								if (formValue.options != null) {
+									for (let j = 0; j < formValue.options.length; j++) {
+										if (formValue.options[j] != null && formValue.options[j].defaultInd == true){
+											result = formValue.options[j].value;
+										}
+									}
+								} else if (formValue.referPref != null) {
+									let pref = action.appPrefs.prefTexts[formValue.referPref.prefName][formValue.referPref.prefItem];
+									if (pref != null && pref.value != null && pref.value != "") {
+										let value = JSON.parse(pref.value);
+										if (value.options != null) {
+											for (let j = 0; j < value.options.length; j++) {
+												if (value.options[j] != null && value.options[j].defaultInd == true){
+													result = value.options[j].value;
+												}
+											}
+										}
 									}
 								}
 							}
