@@ -197,14 +197,8 @@ class PMDefectContainer extends Component {
 		this.props.actions.list({state:this.props.pmdefect});
 	}
 	
-	inputChange = (fieldName,switchValue,event) => {
-		let value = "";
-		if (switchValue === "DATE") {
-			value = event.toISOString();
-		} else {
-			value = switchValue;
-		}
-		utils.inputChange(this.props,fieldName,value);
+	inputChange = (type,field,value,event) => {
+		utils.inputChange({type,props:this.props,field,value,event});
 	}
 	
 	onBlur = (field) => {
