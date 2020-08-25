@@ -49,7 +49,10 @@ export function init({parent,parentType}) {
     params.URI = '/api/member/callService';
 
     return callService(params).then( (responseJson) => {
-    	if (responseJson != null && responseJson.protocalError == null){
+    	if (responseJson != null && responseJson.protocalError == null && responseJson.status != null && (responseJson.status == "ACTIONFAILED" || responseJson.status == "EXECUTIONFAILED")) {
+    		dispatch({type:'SHOW_STATUS',error:responseJson.errors});
+    		dispatch({type: "LOAD_INIT_PM_DEFECT", responseJson });
+    	} else if (responseJson != null && responseJson.protocalError == null){
     		dispatch({ type: "LOAD_INIT_PM_DEFECT", responseJson });
 		} else {
 			actionUtils.checkConnectivity(responseJson,dispatch);
@@ -104,7 +107,10 @@ export function list({state,listStart,listLimit,searchCriteria,orderCriteria,inf
 		params.URI = '/api/member/callService';
 
 		return callService(params).then( (responseJson) => {
-			if (responseJson != null && responseJson.protocalError == null){
+			if (responseJson != null && responseJson.protocalError == null && responseJson.status != null && (responseJson.status == "ACTIONFAILED" || responseJson.status == "EXECUTIONFAILED")) {
+	    		dispatch({type:'SHOW_STATUS',error:responseJson.errors});
+	    		dispatch({type: "LOAD_LIST_PM_DEFECT", responseJson });
+	    	} else if (responseJson != null && responseJson.protocalError == null){
 				dispatch({ type: "LOAD_LIST_PM_DEFECT", responseJson });
 				if (info != null) {
 		        	  dispatch({type:'SHOW_STATUS',info:info});  
