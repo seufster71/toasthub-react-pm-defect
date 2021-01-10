@@ -22,14 +22,12 @@ import * as defectActions from './defect-actions';
 import fuLogger from '../../core/common/fu-logger';
 import DefectView from '../../memberView/pm_defect/defect-view';
 import DefectModifyView from '../../memberView/pm_defect/defect-modify-view';
-import utils from '../../core/common/utils';
-import moment from 'moment';
+import BaseContainer from '../../core/container/base-container';
 
 
-class PMDefectContainer extends Component {
+class PMDefectContainer extends BaseContainer {
 	constructor(props) {
 		super(props);
-		this.state = {pageName:"PM_DEFECT",isDeleteModalOpen: false, errors:null, warns:null, successes:null};
 	}
 
 	componentDidMount() {
@@ -40,147 +38,21 @@ class PMDefectContainer extends Component {
 		}
 	}
 
-	onListLimitChange = (fieldName, event) => {
-		let value = 20;
-		if (this.props.codeType === 'NATIVE') {
-			value = event.nativeEvent.text;
-		} else {
-			value = event.target.value;
-		}
-
-		let listLimit = parseInt(value);
-		this.props.actions.listLimit({state:this.props.pmdefect,listLimit});
-	}
-
-	onPaginationClick = (value) => {
-		fuLogger.log({level:'TRACE',loc:'DefectContainer::onPaginationClick',msg:"fieldName "+ value});
-		let listStart = this.props.pmdefect.listStart;
-		let segmentValue = 1;
-		let oldValue = 1;
-		if (this.state["PM_DEFECT_PAGINATION"] != null && this.state["PM_DEFECT_PAGINATION"] != ""){
-			oldValue = this.state["PM_DEFECT_PAGINATION"];
-		}
-		if (value === "prev") {
-			segmentValue = oldValue - 1;
-		} else if (value === "next") {
-			segmentValue = oldValue + 1;
-		} else {
-			segmentValue = value;
-		}
-		listStart = ((segmentValue - 1) * this.props.pmdefect.listLimit);
-		this.setState({"PM_DEFECT_PAGINATION":segmentValue});
-		
-		this.props.actions.list({state:this.props.pmdefect,listStart});
-	}
-
-	onSearchChange = (fieldName, event) => {
-		if (event.type === 'keypress') {
-			if (event.key === 'Enter') {
-				this.onSearchClick(fieldName,event);
-			}
-		} else {
-			if (this.props.codeType === 'NATIVE') {
-				this.setState({[fieldName]:event.nativeEvent.text});
-			} else {
-				this.setState({[fieldName]:event.target.value});
-			}
-		}
-	}
-
-	onSearchClick = (fieldName, event) => {
-		let searchCriteria = [];
-		if (fieldName === 'PM_DEFECT-SEARCHBY') {
-			if (event != null) {
-				for (let o = 0; o < event.length; o++) {
-					let option = {};
-					option.searchValue = this.state['PM_DEFECT-SEARCH'];
-					option.searchColumn = event[o].value;
-					searchCriteria.push(option);
-				}
-			}
-		} else {
-			for (let i = 0; i < this.props.pmdefect.searchCriteria.length; i++) {
-				let option = {};
-				option.searchValue = this.state['PM_DEFECT-SEARCH'];
-				option.searchColumn = this.props.pmdefect.searchCriteria[i].searchColumn;
-				searchCriteria.push(option);
-			}
-		}
-
-		this.props.actions.search({state:this.props.pmdefect,searchCriteria});
-	}
-
-	onOrderBy = (selectedOption, event) => {
-		fuLogger.log({level:'TRACE',loc:'DefectContainer::onOrderBy',msg:"id " + selectedOption});
-		let orderCriteria = [];
-		if (event != null) {
-			for (let o = 0; o < event.length; o++) {
-				let option = {};
-				if (event[o].label.includes("ASC")) {
-					option.orderColumn = event[o].value;
-					option.orderDir = "ASC";
-				} else if (event[o].label.includes("DESC")){
-					option.orderColumn = event[o].value;
-					option.orderDir = "DESC";
-				} else {
-					option.orderColumn = event[o].value;
-				}
-				orderCriteria.push(option);
-			}
-		} else {
-			let option = {orderColumn:"PM_DEFECT_TABLE_NAME",orderDir:"ASC"};
-			orderCriteria.push(option);
-		}
-		this.props.actions.orderBy({state:this.props.pmdefect,orderCriteria});
+	getState = () => {
+		return this.props.pmdefect;
 	}
 	
-	onSave = () => {
-		fuLogger.log({level:'TRACE',loc:'DefectContainer::onSave',msg:"test"});
-		let errors = utils.validateFormFields(this.props.pmdefect.prefForms.PM_DEFECT_FORM,this.props.pmdefect.inputFields);
-		
-		if (errors.isValid){
-			this.props.actions.saveItem({state:this.props.pmdefect});
-		} else {
-			this.setState({errors:errors.errorMap});
-		}
-	}
-	
-	onModify = (item) => {
-		let id = null;
-		if (item != null && item.id != null) {
-			id = item.id;
-		}
-		fuLogger.log({level:'TRACE',loc:'DefectContainer::onModify',msg:"test"+id});
-		this.props.actions.modifyItem({id,appPrefs:this.props.appPrefs});
-	}
-	
-	onDelete = (item) => {
-		fuLogger.log({level:'TRACE',loc:'DefectContainer::onDelete',msg:"test"});
-		this.setState({isDeleteModalOpen:false});
-		if (item != null && item.id != "") {
-			this.props.actions.deleteItem({state:this.props.pmdefect,id:item.id});
-		}
-	}
-	
-	openDeleteModal = (item) => {
-		this.setState({isDeleteModalOpen:true,selected:item});
+	getForm = () => {
+		return "PM_DEFECT_FORM";
 	}
 	
 	onOption = (code, item) => {
 		fuLogger.log({level:'TRACE',loc:'DefectContainer::onOption',msg:" code "+code});
+		if (this.onOptionBase(code,item)) {
+			return;
+		}
+		
 		switch(code) {
-			case 'MODIFY': {
-				this.onModify(item);
-				break;
-			}
-			case 'DELETE': {
-				this.openDeleteModal(item);
-				break;
-			}
-			case 'DELETEFINAL': {
-				this.onDelete(item);
-				break;
-			}
 			case 'COMMENT': {
 				this.props.history.push({pathname:'/pm-comment',state:{parent:item,parentType:"DEFECT"}});
 				break;
@@ -188,83 +60,22 @@ class PMDefectContainer extends Component {
 		}
 	}
 	
-	closeModal = () => {
-		this.setState({isDeleteModalOpen:false,errors:null,warns:null});
-	}
 	
-	onCancel = () => {
-		fuLogger.log({level:'TRACE',loc:'DefectContainer::onCancel',msg:"test"});
-		this.props.actions.list({state:this.props.pmdefect});
-	}
-	
-	inputChange = (type,field,value,event) => {
-		utils.inputChange({type,props:this.props,field,value,event});
-	}
-	
-	onBlur = (field) => {
-		fuLogger.log({level:'TRACE',loc:'DefectContainer::onBlur',msg:field.name});
-		let fieldName = field.name;
-		// get field and check what to do
-		if (field.optionalParams != ""){
-			let optionalParams = JSON.parse(field.optionalParams);
-			if (optionalParams.onBlur != null) {
-				if (optionalParams.onBlur.validation != null && optionalParams.onBlur.validation == "matchField") {
-					if (field.validation != "") {
-						let validation = JSON.parse(field.validation);
-						if (validation[optionalParams.onBlur.validation] != null && validation[optionalParams.onBlur.validation].id != null){
-							if (this.props.pmdefect.inputFields[validation[optionalParams.onBlur.validation].id] == this.props.pmdefect.inputFields[fieldName]) {
-								if (validation[optionalParams.onBlur.validation].successMsg != null) {
-									let successMap = this.state.successes;
-									if (successMap == null){
-										successMap = {};
-									}
-									successMap[fieldName] = validation[optionalParams.onBlur.validation].successMsg;
-									this.setState({successes:successMap, errors:null});
-								}
-							} else {
-								if (validation[optionalParams.onBlur.validation].failMsg != null) {
-									let errorMap = this.state.errors;
-									if (errorMap == null){
-										errorMap = {};
-									}
-									errorMap[fieldName] = validation[optionalParams.onBlur.validation].failMsg;
-									this.setState({errors:errorMap, successes:null});
-								}
-							}
-						}
-					}
-				} else if (optionalParams.onBlur.func != null) {
-				
-				}
-			}
-		}
-	}
-	
-	goBack = () => {
-		fuLogger.log({level:'TRACE',loc:'DefectContainer::goBack',msg:"test"});
-		this.props.history.goBack();
-	}
-
 	render() {
 		fuLogger.log({level:'TRACE',loc:'DefectContainer::render',msg:"Hi there"});
 		if (this.props.pmdefect.isModifyOpen) {
 			return (
 				<DefectModifyView
-				containerState={this.state}
-				item={this.props.pmdefect.selected}
-				inputFields={this.props.pmdefect.inputFields}
+				itemState={this.props.pmdefect}
 				appPrefs={this.props.appPrefs}
-				itemPrefForms={this.props.pmdefect.prefForms}
 				onSave={this.onSave}
 				onCancel={this.onCancel}
-				onReturn={this.onCancel}
 				inputChange={this.inputChange}
-				onBlur={this.onBlur}/>
+				/>
 			);
 		} else if (this.props.pmdefect.items != null) {
 			return (
 				<DefectView
-				containerState={this.state}
 				itemState={this.props.pmdefect}
 				appPrefs={this.props.appPrefs}
 				onListLimitChange={this.onListLimitChange}
